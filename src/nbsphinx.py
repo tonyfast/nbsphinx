@@ -847,6 +847,17 @@ class NotebookParser(rst.Parser):
             with open(dest, 'wb') as f:
                 f.write(data)
 
+        if env.config.nbsphinx_save_rst:
+            auxfile = env.doc2path(env.docname, base=auxdir, suffix='.rst')
+            rstfile = env.doc2path(env.docname, base=None, suffix='.rst')
+            sphinx.util.ensuredir(
+                os.path.join(auxdir, os.path.dirname(rstfile)))
+            with open(os.path.join(env.srcdir, auxfile), 'w') as f:
+                f.write(rststring)
+            if not hasattr(env, 'nbsphinx_rstfiles'):
+                env.nbsphinx_rstfiles = {}
+            env.nbsphinx_rstfiles[env.docname] = auxfile, rstfile
+
         if resources.get('nbsphinx_orphan', False):
             rst.Parser.parse(self, ':orphan:', document)
         if env.config.nbsphinx_prolog:
@@ -1515,6 +1526,12 @@ def html_collect_pages(app):
             sphinx.util.copyfile(os.path.join(app.env.srcdir, file), target)
         except OSError as err:
             app.warn('cannot copy local file {!r}: {}'.format(file, err))
+
+    rstfiles = getattr(app.env, 'nbsphinx_rstfiles', {}).values()
+    for source, target in status_iterator(
+            rstfiles, 'copying RST files ... ',
+            sphinx.util.console.brown, len(rstfiles)):
+        sphinx.util.copyfile(source, os.path.join(app.builder.outdir, target))
     return []  # No new HTML pages are created
 
 
@@ -1522,6 +1539,10 @@ def env_purge_doc(app, env, docname):
     """Remove list of local files for a given document."""
     try:
         del env.nbsphinx_files[docname]
+    except (AttributeError, KeyError):
+        pass
+    try:
+        del env.nbsphinx_rstfiles[docname]
     except (AttributeError, KeyError):
         pass
 
@@ -1689,6 +1710,7 @@ def setup(app):
     app.add_config_value('nbsphinx_input_prompt', '[%s]:', rebuild='env')
     app.add_config_value('nbsphinx_output_prompt', '[%s]:', rebuild='env')
     app.add_config_value('nbsphinx_custom_formats', {}, rebuild='env')
+    app.add_config_value('nbsphinx_save_rst', False, rebuild='env')
 
     app.add_directive('nbinput', NbInput)
     app.add_directive('nboutput', NbOutput)
