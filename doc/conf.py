@@ -50,7 +50,7 @@ nbsphinx_execute_arguments = [
 #nbsphinx_responsive_width = '700px'
 
 # If True, the intermediate RST files are copied to the HTML output directory:
-#nbsphinx_save_rst = True
+nbsphinx_save_rst = True
 
 # This is processed by Jinja2 and inserted before each notebook
 nbsphinx_prolog = r"""
