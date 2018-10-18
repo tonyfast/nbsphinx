@@ -1529,6 +1529,11 @@ def env_purge_doc(app, env, docname):
 def depart_codearea_html(self, node):
     """Add empty lines before and after the code."""
     text = self.body[-1]
+    before, pre, after = text.partition('<pre>')
+    code, endpre, after = after.partition('</pre>')
+    code = nbconvert.filters.ansi2html(code)
+    text = ''.join((before, pre, code, endpre, after))
+    # TODO: do this on "code":
     text = text.replace('<pre>',
                         '<pre>\n' + '\n' * node.get('empty-lines-before', 0))
     text = text.replace('</pre>',
